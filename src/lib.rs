@@ -1,3 +1,9 @@
+mod buffer;
+mod decrypt;
+mod utils;
+mod encrypt;
+
+
 #[cfg(test)]
 mod tests {
     #[test]
