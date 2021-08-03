@@ -1,4 +1,4 @@
-use crate::buffer;
+use crate::bytes;
 use crate::decrypt::frequency::{zero_distribution, default_distribution, char_to_index};
 
 /// returns a score (where lower is better) of how likely we are to see

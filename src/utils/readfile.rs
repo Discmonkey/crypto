@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use crate::buffer::Bytes;
+use crate::bytes::Bytes;
 
 pub fn read_as_bytes<P>(filename: P) -> Vec<Bytes>
     where P:AsRef<Path> {
@@ -31,7 +31,7 @@ pub fn read_in_base_64<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
         }
     }
 
-    Bytes::from(&base_64)
+    Some(Bytes::from_base_64(&base_64))
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

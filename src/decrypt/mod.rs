@@ -1,8 +1,11 @@
 pub mod frequency;
 pub mod score;
+pub mod find_key_size;
+
+use find_key_size::find_key_size;
 
 use std::collections::binary_heap;
-use crate::buffer::Bytes;
+use crate::bytes::Bytes;
 use std::cmp::Ordering;
 use crate::decrypt::score::score_string;
 
@@ -58,7 +61,7 @@ pub fn find_single_char_encryption(many_bytes: Vec<Bytes>) -> Vec<Decryption> {
 
 #[cfg(test)]
 mod tests {
-   use crate::buffer::Bytes;
+   use crate::bytes::Bytes;
    use crate::decrypt::{single_char_cipher, find_single_char_encryption};
    use crate::utils::readfile::read_as_bytes;
 

@@ -1,4 +1,4 @@
-use std::fmt::Write;
+use std::fmt::{Write, Formatter};
 use std::ops::Deref;
 
 static BASE_64: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -6,35 +6,28 @@ static HEX: &str = "0123456789abcdef";
 
 #[derive(Debug, Clone)]
 pub struct Bytes {
-    bytes: Vec<u8>
+    pub bytes: Vec<u8>
 }
 
-fn hex_to_u8(h: char) -> Option<u8> {
-   match h {
-       '0'..='9' => {
-           Some((h as u8) - ('0' as u8))
-       },
-
-       'a'..='f' => {
-           Some((h as u8) - ('a' as u8) + 10)
-       }
-
-       _ => {
-           None
-       }
-   }
+pub fn debug_bytes(bytes: Bytes) {
+   println!("[{}, {} ... {}]", bytes.bytes[0], bytes.bytes[1], bytes.bytes[-1])
 }
 
-fn base64_to_int(h: char) -> Option<u8> {
-    match h {
-        'A'..='Z' => Some((h as u8) - ('A' as u8)),
-        'a'..='z' => Some((h as u8) - ('a' as u8) + 26),
-        '0'..='9' => Some((h as u8) - ('0' as u8) + 52),
-        '+' => Some(62),
-        '/' => Some(63),
-        _ => None
-    }
+
+pub fn hamming_distance(a: &[u8], b: &[u8]) -> f64  {
+   a.iter().zip(b.iter()).map(|(a, b)| {
+        let mut bit_dif = 0;
+        let mut dif = a ^ b;
+
+        for _ in 0..7 {
+            bit_dif += 1 & dif;
+            dif >>= 1;
+        }
+
+        f64::from(bit_dif)
+    }).sum()
 }
+
 
 impl Bytes {
 
@@ -119,20 +112,50 @@ impl Bytes {
 
     pub fn from_base_64(string: &str) -> Self {
         let mut bytes = vec!();
-        let mut built_value = 0;
-        let mut decoded_value = 0;
+        let mut decoded = 0;
         let mut bits_written = 0;
         for char in string.chars() {
-            let value = base64_to_int(char);
+            let maybe_value = base64_to_int(char);
 
-            match bits_written {
-                0 => {
-                    built_value
+            if let Some(value) = maybe_value {
+
+                match bits_written {
+                    0 => {
+                        decoded = value;
+                        bits_written = 6;
+                    }
+
+                    6 => {
+                        decoded = (decoded << 2) | (value >> 4);
+                        bytes.push(decoded);
+
+                        decoded = value & 15;
+                        bits_written = 4;
+                    }
+
+                    4 => {
+                        decoded = (decoded << 4) | (value >> 2);
+                        bytes.push(decoded);
+
+                        decoded = value & 3;
+                        bits_written = 2;
+                    }
+
+                    2 => {
+                        decoded = (decoded << 6) | value;
+                        bytes.push(decoded);
+
+                        decoded = 0;
+                        bits_written = 0;
+                    }
+
+                    _ => ()
                 }
             }
+        }
 
-
-
+        if bits_written != 0 {
+            bytes.push(decoded);
         }
 
         Self {
@@ -154,6 +177,8 @@ impl Bytes {
         return out
     }
 
+
+
     pub fn xor(&self, other: &Self) -> Self {
         Self {
             bytes: self.bytes.iter().zip(other.bytes.iter()).map(|(a, b)| {
@@ -161,6 +186,7 @@ impl Bytes {
             }).collect()
         }
     }
+
 
     pub fn repeating_xor(&self, other: &Self) -> Self {
         let cycle = other.bytes.iter().cycle();
@@ -181,13 +207,42 @@ impl Bytes {
     }
 }
 
-pub fn print_me() {
-    println!("{}", BASE_64)
+macro_rules! offset {
+    ($char:tt, $by:expr) => {
+        ($char as u8) - ($by as u8)
+    }
+}
+
+fn hex_to_u8(h: char) -> Option<u8> {
+    match h {
+        '0'..='9' => {
+            Some(offset!(h, '0'))
+        },
+
+        'a'..='f' => {
+            Some((h as u8) - ('a' as u8) + 10)
+        }
+
+        _ => {
+            None
+        }
+    }
+}
+
+fn base64_to_int(h: char) -> Option<u8> {
+    match h {
+        'A'..='Z' => Some(offset!(h, 'A')),
+        'a'..='z' => Some(offset!(h, 'a') + 26),
+        '0'..='9' => Some(offset!(h, '0') + 52),
+        '+' => Some(62),
+        '/' => Some(63),
+        _ => None
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::buffer::Bytes;
+    use crate::bytes::{Bytes, hamming_distance};
 
     #[test]
     fn conversion_test() {
@@ -209,6 +264,22 @@ mod tests {
         assert_eq!(out.to_hex(), "746865206b696420646f6e277420706c6179")
     }
 
+    #[test]
+    fn base_64_read_test() {
+        let first = Bytes::from_hex_string("1c0111001f010100061a024b53535009181c").unwrap();
+        let second = first.to_base64_string();
+        let third = Bytes::from_base_64(&second);
+
+        assert_eq!(third.to_hex(), "1c0111001f010100061a024b53535009181c")
+    }
+
+    #[test]
+    fn test_hamming_distance() {
+        let a = Bytes::from_utf8_string("this is a test");
+        let b = Bytes::from_utf8_string("wokka wokka!!!");
+
+        assert_eq!(hamming_distance(&a.bytes, &b.bytes), 37.0);
+    }
 }
 
 // 0 0 0 0

@@ -1,4 +1,4 @@
-use crate::buffer::Bytes;
+use crate::bytes::Bytes;
 
 fn encrypt(message: Bytes, key: Bytes) -> Bytes {
    message.repeating_xor(&key)
@@ -7,7 +7,7 @@ fn encrypt(message: Bytes, key: Bytes) -> Bytes {
 
 #[cfg(test)]
 mod tests {
-    use crate::buffer::Bytes;
+    use crate::bytes::Bytes;
     use crate::decrypt::{single_char_cipher, find_single_char_encryption};
     use crate::utils::readfile::read_as_bytes;
 
