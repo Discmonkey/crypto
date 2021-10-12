@@ -3,7 +3,6 @@ mod decrypt;
 mod utils;
 mod encrypt;
 mod stats;
-mod bits;
 
 
 #[cfg(test)]

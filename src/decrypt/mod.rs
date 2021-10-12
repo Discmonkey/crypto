@@ -1,8 +1,9 @@
 pub mod frequency;
 pub mod score;
-pub mod find_key_size;
+pub mod repeating_xor;
+mod single_key_xor;
 
-use find_key_size::find_key_size;
+use repeating_xor::find_key_size;
 
 use std::collections::binary_heap;
 use crate::bytes::Bytes;

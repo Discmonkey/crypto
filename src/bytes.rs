@@ -10,7 +10,7 @@ pub struct Bytes {
 }
 
 pub fn debug_bytes(bytes: Bytes) {
-   println!("[{}, {} ... {}]", bytes.bytes[0], bytes.bytes[1], bytes.bytes[-1])
+   println!("[{}, {} ... {}]", bytes.bytes[0], bytes.bytes[1], bytes.bytes[bytes.bytes.len() - 1])
 }
 
 
@@ -182,17 +182,6 @@ impl Bytes {
     pub fn xor(&self, other: &Self) -> Self {
         Self {
             bytes: self.bytes.iter().zip(other.bytes.iter()).map(|(a, b)| {
-                a ^ b
-            }).collect()
-        }
-    }
-
-
-    pub fn repeating_xor(&self, other: &Self) -> Self {
-        let cycle = other.bytes.iter().cycle();
-
-        Self {
-            bytes: self.bytes.iter().zip(cycle).map(|(a, b)| {
                 a ^ b
             }).collect()
         }
