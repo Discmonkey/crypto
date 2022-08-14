@@ -1,6 +1,6 @@
 mod utils;
 mod encrypt;
-mod stats;
+// mod stats;
 mod solutions;
 mod bitstring;
 

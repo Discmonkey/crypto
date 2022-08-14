@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use crate::bytes::Bytes;
+use crate::bitstring::bytes::Bytes;
 
 pub fn read_as_bytes<P>(filename: P) -> Vec<Bytes>
     where P:AsRef<Path> {

@@ -1,4 +1,4 @@
-use crate::bytes::Bytes;
+use crate::bitstring::bytes::Bytes;
 
 pub fn repeating_xor(message: &Bytes, key: &Bytes) -> Bytes {
     let cycle = key.bytes.iter().cycle();

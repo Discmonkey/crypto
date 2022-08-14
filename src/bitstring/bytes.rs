@@ -9,41 +9,22 @@ pub struct Bytes {
     pub bytes: Vec<u8>
 }
 
-pub fn debug_bytes(bytes: Bytes) {
-   println!("[{}, {} ... {}]", bytes.bytes[0], bytes.bytes[1], bytes.bytes[bytes.bytes.len() - 1])
-}
-
-pub fn hamming_distance(a: &[u8], b: &[u8]) -> f64  {
-   a.iter().zip(b.iter()).map(|(a, b)| {
-        let mut bit_dif = 0;
-        let mut dif = a ^ b;
-
-        for _ in 0..7 {
-            bit_dif += 1 & dif;
-            dif >>= 1;
-        }
-
-        f64::from(bit_dif)
-    }).sum()
-}
-
 impl Bytes {
-    pub fn new(size: usize) -> Self {
+    pub fn new() -> Self {
         Self {
-            bytes: vec![0; size]
+            bytes: vec!()
         }
     }
 
-    /// write a pattern into the buffer
-    pub fn write_char(&mut self, c: char, offset: usize, step:usize) {
-        let mut index = offset;
-        let end = self.bytes.len();
-
-        while index < end {
-            self.bytes[index.clone()] = (c as u8);
-            index += &step;
-        }
+    pub fn last(&mut self) -> &mut u8 {
+        let idx = self.len() - 1;
+        return &mut self.bytes[idx]
     }
+
+    pub fn push(&mut self, b: u8) {
+       self.bytes.push(b);
+    }
+
     /// reads in bytes encoded as hex, returns a Bytes object when decoding is successful
     ///
     /// converts hex to Bytes by reading two characters at at time.
@@ -225,47 +206,47 @@ fn base64_to_int(h: char) -> Option<u8> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::bytes::{Bytes, hamming_distance};
-
-    #[test]
-    fn conversion_test() {
-        let bytes = Bytes::from_hex_string("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d").unwrap();
-        let out = bytes.to_base64_string();
-
-        println!("{:?}\n", out);
-        println!("{}", bytes.to_hex());
-        assert_eq!(&out, "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
-    }
-
-    #[test]
-    fn xor_test() {
-        let first = Bytes::from_hex_string("1c0111001f010100061a024b53535009181c").unwrap();
-        let second = Bytes::from_hex_string("686974207468652062756c6c277320657965").unwrap();
-
-        let out = first.xor(&second);
-
-        assert_eq!(out.to_hex(), "746865206b696420646f6e277420706c6179")
-    }
-
-    #[test]
-    fn base_64_read_test() {
-        let first = Bytes::from_hex_string("1c0111001f010100061a024b53535009181c").unwrap();
-        let second = first.to_base64_string();
-        let third = Bytes::from_base_64(&second);
-
-        assert_eq!(third.to_hex(), "1c0111001f010100061a024b53535009181c")
-    }
-
-    #[test]
-    fn test_hamming_distance() {
-        let a = Bytes::from_utf8_string("this is a test");
-        let b = Bytes::from_utf8_string("wokka wokka!!!");
-
-        assert_eq!(hamming_distance(&a.bytes, &b.bytes), 37.0);
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//     use crate::bytes::{Bytes, hamming_distance};
+//
+//     #[test]
+//     fn conversion_test() {
+//         let bytes = Bytes::from_hex_string("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d").unwrap();
+//         let out = bytes.to_base64_string();
+//
+//         println!("{:?}\n", out);
+//         println!("{}", bytes.to_hex());
+//         assert_eq!(&out, "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
+//     }
+//
+//     #[test]
+//     fn xor_test() {
+//         let first = Bytes::from_hex_string("1c0111001f010100061a024b53535009181c").unwrap();
+//         let second = Bytes::from_hex_string("686974207468652062756c6c277320657965").unwrap();
+//
+//         let out = first.xor(&second);
+//
+//         assert_eq!(out.to_hex(), "746865206b696420646f6e277420706c6179")
+//     }
+//
+//     #[test]
+//     fn base_64_read_test() {
+//         let first = Bytes::from_hex_string("1c0111001f010100061a024b53535009181c").unwrap();
+//         let second = first.to_base64_string();
+//         let third = Bytes::from_base_64(&second);
+//
+//         assert_eq!(third.to_hex(), "1c0111001f010100061a024b53535009181c")
+//     }
+//
+//     #[test]
+//     fn test_hamming_distance() {
+//         let a = Bytes::from_utf8_string("this is a test");
+//         let b = Bytes::from_utf8_string("wokka wokka!!!");
+//
+//         assert_eq!(hamming_distance(&a.bytes, &b.bytes), 37.0);
+//     }
+// }
 
 // 0 0 0 0
 //
