@@ -13,7 +13,6 @@ pub fn debug_bytes(bytes: Bytes) {
    println!("[{}, {} ... {}]", bytes.bytes[0], bytes.bytes[1], bytes.bytes[bytes.bytes.len() - 1])
 }
 
-
 pub fn hamming_distance(a: &[u8], b: &[u8]) -> f64  {
    a.iter().zip(b.iter()).map(|(a, b)| {
         let mut bit_dif = 0;
@@ -28,9 +27,7 @@ pub fn hamming_distance(a: &[u8], b: &[u8]) -> f64  {
     }).sum()
 }
 
-
 impl Bytes {
-
     pub fn new(size: usize) -> Self {
         Self {
             bytes: vec![0; size]
@@ -41,7 +38,6 @@ impl Bytes {
     pub fn write_char(&mut self, c: char, offset: usize, step:usize) {
         let mut index = offset;
         let end = self.bytes.len();
-
 
         while index < end {
             self.bytes[index.clone()] = (c as u8);

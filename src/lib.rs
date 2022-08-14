@@ -1,8 +1,8 @@
-mod bytes;
-mod decrypt;
 mod utils;
 mod encrypt;
 mod stats;
+mod solutions;
+mod bitstring;
 
 
 #[cfg(test)]
