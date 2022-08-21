@@ -1,143 +1,96 @@
-use std::fmt::{Write, Formatter};
-use std::ops::Deref;
-
+use std::fmt::{Write};
 static BASE_64: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static HEX: &str = "0123456789abcdef";
+const BIT_SETTERS: &'static [u8] = &[
+    0b1000_0000,
+    0b0100_0000,
+    0b0010_0000,
+    0b0001_0000,
+    0b0000_1000,
+    0b0000_0100,
+    0b0000_0010,
+    0b0000_0001,
+];
 
 #[derive(Debug, Clone)]
 pub struct Bytes {
-    pub bytes: Vec<u8>
+    pub bytes: Vec<u8>,
+    bit_length: usize,
 }
 
 impl Bytes {
+    // constructors
     pub fn new() -> Self {
         Self {
-            bytes: vec!()
+            bytes: vec!(),
+            bit_length: 0
         }
     }
 
-    pub fn last(&mut self) -> &mut u8 {
-        let idx = self.len() - 1;
-        return &mut self.bytes[idx]
+    pub fn read_bit(&self, byte: usize, bit: usize) -> u8 {
+        self.bytes[byte] & BIT_SETTERS[bit]
     }
 
-    pub fn push(&mut self, b: u8) {
-       self.bytes.push(b);
+    pub fn push_byte(&mut self, byte: u8) {
+        self.bit_length += 8;
+        let remainder = self.bit_length % 8;
+        if remainder == 0 {
+            self.bytes.push(byte);
+        } else {
+            self.bytes.push(byte << (8 - remainder));
+        }
+    }
+
+    pub fn push_bit(&mut self, bit: u8) {
+        if self.bit_length % 8 == 0 {
+             self.bytes.push(if bit > 0 { BIT_SETTERS[0] } else { 0 });
+        } else if bit > 0 {
+             *self.bytes.last_mut().unwrap() += BIT_SETTERS[self.bit_length % 8];
+        }
+        self.bit_length += 1;
+    }
+
+    /// read n bits is meant for reads smaller than byte, otherwise just use the regular byte api
+    pub fn read_n_bits(&self, at: usize, n: usize) -> u8 {
+        assert!(n <= 8);
+        let mut byte_idx = at / 8;
+        let mut bit_idx = at % 8;
+        let mut val = 0;
+
+        for setter in BIT_SETTERS.iter().skip(8 - n) {
+            if self.read_bit(byte_idx, bit_idx) > 0 {
+                val |= setter
+            }
+            bit_idx += 1;
+            if bit_idx == 8 {
+                bit_idx = 0;
+                byte_idx += 1;
+            }
+        }
+
+        val
     }
 
     /// reads in bytes encoded as hex, returns a Bytes object when decoding is successful
-    ///
     /// converts hex to Bytes by reading two characters at at time.
-    pub fn from_hex_string(string: &str) -> Option<Self> {
+    pub fn from_hex(string: &str) -> Option<Self> {
         // handle zero padding later?
-
-        let mut bytes: Vec<u8> = vec![0; string.len() / 2];
-
-        let evens = string.chars().step_by(2);
-        let odds = string.chars().skip(1).step_by(2);
-
-        for (i, (h1, h2)) in evens.zip(odds).enumerate() {
-            if let (Some(a), Some(b)) = (hex_to_u8(h1), hex_to_u8(h2)) {
-                bytes[i] = a * 16 + b
+        let mut bytes = vec![];
+        let mut bit_length = 0;
+        for char in string.chars() {
+            if let Some(int_val) = hex_to_u8(char) {
+                if bit_length % 8 == 4 {
+                    *bytes.last_mut().unwrap() += int_val;
+                } else {
+                    bytes.push(int_val * 16)
+                }
+                bit_length += 4
             } else {
                 return None
             }
         }
 
-        Some(Bytes{bytes})
-    }
-
-    pub fn from_utf8_string(string: &str) -> Self {
-        Self {
-            bytes: string.bytes().collect()
-        }
-    }
-
-    // Writes out bytes as base 64, reads three bytes at a time and writes out 4 base 64 characters
-    pub fn to_base64_string(&self) -> String {
-        let mut out = String::new();
-
-        let mut remainder = 0;
-        let mut remainder_bits = 0;
-
-        for byte in &self.bytes {
-            if remainder_bits == 0 {
-                out.write_char(BASE_64.chars().nth((byte >> 2) as usize).unwrap());
-                remainder_bits = 2;
-                remainder = (byte & 1) * 16 + ((byte & 2) >> 1) * 32;
-            } else if remainder_bits == 2 {
-                let index = (byte >> 4) + remainder;
-                out.write_char(BASE_64.chars().nth(index as usize).unwrap());
-                remainder_bits = 4;
-                remainder = (byte & 1) * 4 + ((byte & 2) >> 1) * 8 + ((byte & 4) >> 2) * 16 + ((byte & 8) >> 3) * 32;
-            } else if remainder_bits == 4 {
-                let index1 = (byte >> 6) + remainder;
-                let index2 = byte & 63;
-
-                out.write_char(BASE_64.chars().nth(index1 as usize).unwrap());
-                out.write_char(BASE_64.chars().nth(index2 as usize).unwrap());
-                remainder_bits = 0;
-                remainder = 0;
-            }
-        }
-
-        if remainder > 0 {
-            out.write_char(BASE_64.chars().nth(remainder as usize).unwrap());
-        }
-        out
-    }
-
-    pub fn from_base_64(string: &str) -> Self {
-        let mut bytes = vec!();
-        let mut decoded = 0;
-        let mut bits_written = 0;
-        for char in string.chars() {
-            let maybe_value = base64_to_int(char);
-
-            if let Some(value) = maybe_value {
-
-                match bits_written {
-                    0 => {
-                        decoded = value;
-                        bits_written = 6;
-                    }
-
-                    6 => {
-                        decoded = (decoded << 2) | (value >> 4);
-                        bytes.push(decoded);
-
-                        decoded = value & 15;
-                        bits_written = 4;
-                    }
-
-                    4 => {
-                        decoded = (decoded << 4) | (value >> 2);
-                        bytes.push(decoded);
-
-                        decoded = value & 3;
-                        bits_written = 2;
-                    }
-
-                    2 => {
-                        decoded = (decoded << 6) | value;
-                        bytes.push(decoded);
-
-                        decoded = 0;
-                        bits_written = 0;
-                    }
-
-                    _ => ()
-                }
-            }
-        }
-
-        if bits_written != 0 {
-            bytes.push(decoded);
-        }
-
-        Self {
-            bytes
-        }
+        Some(Self { bytes, bit_length })
     }
 
     pub fn to_hex(&self) -> String {
@@ -145,22 +98,19 @@ impl Bytes {
 
         for byte in &self.bytes {
             let index1 = byte >> 4;
-            let index2 = (byte & 15);
+            let index2 = byte & 15;
 
-            out.write_char(HEX.chars().nth(index1 as usize).unwrap());
-            out.write_char(HEX.chars().nth(index2 as usize).unwrap());
+            out.write_char(HEX.chars().nth(index1 as usize).unwrap()).expect("welp");
+            out.write_char(HEX.chars().nth(index2 as usize).unwrap()).expect("welp");
         }
 
         return out
     }
 
-
-
-    pub fn xor(&self, other: &Self) -> Self {
+    pub fn from_utf8(string: &str) -> Self {
         Self {
-            bytes: self.bytes.iter().zip(other.bytes.iter()).map(|(a, b)| {
-                a ^ b
-            }).collect()
+            bytes: string.bytes().collect(),
+            bit_length: string.bytes().len(),
         }
     }
 
@@ -168,8 +118,93 @@ impl Bytes {
         self.bytes.iter().map(|&c| c as char).collect()
     }
 
+    pub fn from_base64(string: &str) -> Option<Self> {
+        let mut bytes = vec![0];
+        let mut bit_length= 0;
+        let mut bit_index = 0;
+        for char in string.chars() {
+            let value = base64_to_int(char)?;
+            for setter in BIT_SETTERS.iter().skip(2) {
+                if setter & value > 0 {
+                    *bytes.last_mut().unwrap() += BIT_SETTERS[bit_index];
+                }
+                bit_index += 1;
+                bit_length += 1;
+
+                if bit_index == 8 {
+                    bit_index = 0;
+                    bytes.push(0);
+                }
+            }
+        }
+
+        Some(Self {
+            bytes,
+            bit_length
+        })
+    }
+    // Writes out bytes as base 64, reads three bytes at a time and writes out 4 base 64 characters
+    pub fn to_base64(&self) -> String {
+        let mut out = String::new();
+
+        for i in (0..self.bit_length).step_by(6) {
+            let val = self.read_n_bits(i, 6);
+            let char = BASE_64.chars().nth(val as usize).unwrap();
+            out.write_char(char).unwrap();
+        }
+
+        out
+    }
+
+    pub fn from_bitstring(string: &str) -> Option<Self> {
+        let mut bits = Self::new();
+        for char in string.chars() {
+            match char {
+                '0' => bits.push_bit(0),
+                '1' => bits.push_bit(1),
+                _   => return None,
+            }
+        }
+
+        Some(bits)
+    }
+
+    pub fn to_bitstring(&self) -> String {
+        let mut s = String::new();
+        for i in 0..self.bit_length {
+            if self.read_bit(i / 8, i % 8) > 0 {
+                s.write_char('1').unwrap();
+            } else {
+                s.write_char('0').unwrap();
+            }
+        }
+
+        s
+    }
+
+    pub fn xor(&self, other: &Self) -> Self {
+        Self {
+            bytes: self.bytes.iter().zip(other.bytes.iter()).map(|(a, b)| {
+                a ^ b
+            }).collect(),
+            bit_length: self.bit_length
+        }
+    }
+
+    pub fn count_ones(&self) -> usize {
+        let mut total = 0;
+        for byte in self.bytes.iter() {
+            for setter in BIT_SETTERS.iter() {
+                if setter & byte > 0 {
+                    total += 1;
+                }
+            }
+        }
+        total
+    }
+
     pub fn len(&self) -> usize {
-        return self.bytes.len()
+        return self.bit_length
     }
 }
 
@@ -186,7 +221,7 @@ fn hex_to_u8(h: char) -> Option<u8> {
         },
 
         'a'..='f' => {
-            Some((h as u8) - ('a' as u8) + 10)
+            Some(offset!(h, 'a') + 10)
         }
 
         _ => {
@@ -206,47 +241,40 @@ fn base64_to_int(h: char) -> Option<u8> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::bytes::{Bytes, hamming_distance};
-//
-//     #[test]
-//     fn conversion_test() {
-//         let bytes = Bytes::from_hex_string("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d").unwrap();
-//         let out = bytes.to_base64_string();
-//
-//         println!("{:?}\n", out);
-//         println!("{}", bytes.to_hex());
-//         assert_eq!(&out, "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
-//     }
-//
-//     #[test]
-//     fn xor_test() {
-//         let first = Bytes::from_hex_string("1c0111001f010100061a024b53535009181c").unwrap();
-//         let second = Bytes::from_hex_string("686974207468652062756c6c277320657965").unwrap();
-//
-//         let out = first.xor(&second);
-//
-//         assert_eq!(out.to_hex(), "746865206b696420646f6e277420706c6179")
-//     }
-//
-//     #[test]
-//     fn base_64_read_test() {
-//         let first = Bytes::from_hex_string("1c0111001f010100061a024b53535009181c").unwrap();
-//         let second = first.to_base64_string();
-//         let third = Bytes::from_base_64(&second);
-//
-//         assert_eq!(third.to_hex(), "1c0111001f010100061a024b53535009181c")
-//     }
-//
-//     #[test]
-//     fn test_hamming_distance() {
-//         let a = Bytes::from_utf8_string("this is a test");
-//         let b = Bytes::from_utf8_string("wokka wokka!!!");
-//
-//         assert_eq!(hamming_distance(&a.bytes, &b.bytes), 37.0);
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use crate::bitstring::bytes::Bytes;
 
-// 0 0 0 0
-//
+    #[test]
+    fn bitstring_basics() {
+        let s = Bytes::from_bitstring("0001");
+        assert_eq!(s.unwrap().to_bitstring(), "0001");
+    }
+
+    #[test]
+    fn from_hex() {
+        let s = Bytes::from_hex("22").unwrap();
+        assert_eq!(s.to_bitstring(), "00100010");
+        assert_eq!(s.to_hex(), "22");
+    }
+
+    #[test]
+    fn from_base64() {
+        let s = Bytes::from_base64("BB").unwrap();
+        assert_eq!(s.to_bitstring(), "000001000001");
+        assert_eq!(s.to_base64(), "BB");
+    }
+
+    #[test]
+    fn xor() {
+        let a = Bytes::from_bitstring("1100").unwrap();
+        let b = Bytes::from_bitstring("0101").unwrap();
+
+        assert_eq!(a.xor(&b).to_bitstring(), "1001");
+    }
+
+    #[test]
+    fn count_ones() {
+        assert_eq!(Bytes::from_bitstring("11001100111").unwrap().count_ones(), 7);
+    }
+}

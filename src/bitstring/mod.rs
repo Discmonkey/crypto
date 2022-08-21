@@ -1,2 +1,1 @@
-pub mod bitstring;
-mod bytes;
+pub mod bytes;
