@@ -37,6 +37,10 @@ impl Bytes {
         if remainder == 0 {
             self.bytes.push(byte);
         } else {
+            // move the start of the next byte over by the number of bits we currently have
+            // and or the result to set the open bits
+            *self.bytes.last_mut().unwrap() |= byte >> remainder;
+            // now push over the bits that were not previously set to the start of the next byte
             self.bytes.push(byte << (8 - remainder));
         }
     }

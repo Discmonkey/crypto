@@ -3,7 +3,7 @@ use std::io::{self, BufRead};
 use std::path::Path;
 use crate::bitstring::bytes::Bytes;
 
-pub fn read_as_bytes<P>(filename: P) -> Vec<Bytes>
+pub fn read_hex<P>(filename: P) -> Vec<Bytes>
     where P:AsRef<Path> {
     let mut bytes_vec: Vec<Bytes> = vec!();
 
@@ -20,7 +20,7 @@ pub fn read_as_bytes<P>(filename: P) -> Vec<Bytes>
     bytes_vec
 }
 
-pub fn read_in_base_64<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
+pub fn read_base64<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
     let mut base_64 = String::new();
 
     let lines = read_lines(filename).ok()?;
@@ -32,6 +32,21 @@ pub fn read_in_base_64<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
     }
 
     Some(Bytes::from_base_64(&base_64))
+}
+
+pub fn read_ut8<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
+    let mut bytes = Bytes::new();
+    if let Ok(lines) = read_lines(filename) {
+        for line in lines {
+            if let Ok(parsed) = line {
+                for char in parsed.bytes() {
+                    bytes.push_byte(char);
+                }
+            }
+        }
+    }
+
+    Some(bytes)
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

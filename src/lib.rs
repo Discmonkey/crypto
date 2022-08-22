@@ -1,8 +1,9 @@
 mod utils;
-mod encrypt;
 // mod stats;
 pub mod bitstring;
 pub mod algorithm;
+pub mod distribution;
+pub mod key_finder;
 
 
 #[cfg(test)]

@@ -2,7 +2,7 @@ use crate::bitstring::bytes::Bytes;
 
 pub mod single_bit_xor;
 
-trait Algorithm {
-    fn encrypt(message: &Bytes, key: &Bytes) -> Bytes;
-    fn decrypt(cipher_text: &Bytes, key: &Bytes) -> Bytes;
+pub trait Algorithm {
+    fn encrypt(&self, message: &Bytes, key: &Bytes) -> Bytes;
+    fn decrypt(&self, cipher_text: &Bytes, key: &Bytes) -> Bytes;
 }
