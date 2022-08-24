@@ -8,25 +8,25 @@ pub struct Distribution {
 impl Distribution {
     pub fn new(initialize_with_one: bool) -> Self {
         Distribution {
-            counts: vec![if initialize_with_one 1 else 0; 255],
+            counts: vec![if initialize_with_one { 1 } else { 0 }; 255],
             odds: vec![0.0;255]
         }
     }
 
-    pub fn load_and_count(&mut self, bytes: Bytes) {
+    pub fn load_and_count(&mut self, bytes: &Bytes) {
         bytes.bytes.iter().for_each(|b| {
-            self.counts[b] += 1;
+            self.counts[*b as usize] += 1;
         });
         let divisor = self.sum_counts();
         for i in 0..256 {
-            self.odds[i] = f64::from(self.counts[i]) / divisor
+            self.odds[i] = f64::from(self.counts[i] as i32) / divisor
         }
     }
 
     fn sum_counts(&self) -> f64 {
         let mut total = 0.0;
         self.counts.iter().for_each(|c| {
-            total += f64::from(c);
+            total += f64::from(*c as i32);
         });
         total
     }

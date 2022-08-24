@@ -20,6 +20,6 @@ impl Algorithm for SingleBitXor {
     }
 
     fn decrypt(&self, cipher_text: &Bytes, key: &Bytes) -> Bytes {
-        SingleBitXor::apply_xor(cipher_text, key[0])
+        SingleBitXor::apply_xor(cipher_text, key.bytes[0])
     }
 }

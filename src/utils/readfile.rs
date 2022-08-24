@@ -10,7 +10,7 @@ pub fn read_hex<P>(filename: P) -> Vec<Bytes>
     if let Ok(lines) = read_lines(filename) {
         for line in lines {
             if let Ok(parsed) = line {
-                if let Some(s) = Bytes::from_hex_string(&parsed) {
+                if let Some(s) = Bytes::from_hex(&parsed) {
                     bytes_vec.push(s)
                 }
             }
@@ -31,7 +31,7 @@ pub fn read_base64<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
         }
     }
 
-    Some(Bytes::from_base_64(&base_64))
+    Bytes::from_base64(&base_64)
 }
 
 pub fn read_ut8<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
