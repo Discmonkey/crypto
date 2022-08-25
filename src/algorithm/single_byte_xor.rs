@@ -1,9 +1,9 @@
 use crate::algorithm::Algorithm;
 use crate::bitstring::bytes::Bytes;
 
-pub struct SingleBitXor {}
+pub struct SingleByteXor {}
 
-impl SingleBitXor {
+impl SingleByteXor {
     pub fn apply_xor(message: &Bytes, byte: u8) -> Bytes {
         let mut bytes = Bytes::new();
         message.bytes.iter().for_each(|b| {
@@ -14,12 +14,12 @@ impl SingleBitXor {
     }
 }
 
-impl Algorithm for SingleBitXor {
+impl Algorithm for SingleByteXor {
     fn encrypt(&self, message: &Bytes, key: &Bytes) -> Bytes {
-        SingleBitXor::apply_xor(message, key.bytes[0])
+        SingleByteXor::apply_xor(message, key.bytes[0])
     }
 
     fn decrypt(&self, cipher_text: &Bytes, key: &Bytes) -> Bytes {
-        SingleBitXor::apply_xor(cipher_text, key.bytes[0])
+        SingleByteXor::apply_xor(cipher_text, key.bytes[0])
     }
 }

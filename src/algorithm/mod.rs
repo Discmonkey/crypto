@@ -1,6 +1,6 @@
 use crate::bitstring::bytes::Bytes;
 
-pub mod single_bit_xor;
+pub mod single_byte_xor;
 
 pub trait Algorithm {
     fn encrypt(&self, message: &Bytes, key: &Bytes) -> Bytes;

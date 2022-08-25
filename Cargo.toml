@@ -20,3 +20,7 @@ path = "src/solutions/set1/challenge2/main.rs"
 [[bin]]
 name = "set1_challenge3"
 path = "src/solutions/set1/challenge3/main.rs"
+
+[[bin]]
+name = "set1_challenge4"
+path = "src/solutions/set1/challenge4/main.rs"

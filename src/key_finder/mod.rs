@@ -1,8 +1,9 @@
-pub mod key_generators;
-pub mod distribution_key_finder;
+pub mod byte_xor_key_finder;
+pub mod scored_key;
 
 use crate::algorithm::Algorithm;
 use crate::bitstring::bytes::Bytes;
+use crate::key_finder::scored_key::ScoredKey;
 
 /// Object that generates possible keys
 trait KeyGenerator {
@@ -12,9 +13,9 @@ trait KeyGenerator {
 
 /// Takes Encryption Algorithm and Key generator and returns num_keys in descending order of
 /// likelihood.
-trait KeyFinder {
+pub trait KeyFinder {
     /// Ransk keys produced by KeyGenerator
-    fn find_key(&self, num_keys: usize, cipher_text: &Bytes, algo: &dyn Algorithm)
-        -> Vec<Bytes>;
+    fn find_key(&self, num_keys: usize, cipher_text: &Bytes)
+        -> Vec<ScoredKey>;
 }
 

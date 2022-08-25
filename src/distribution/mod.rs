@@ -8,8 +8,8 @@ pub struct Distribution {
 impl Distribution {
     pub fn new(initialize_with_one: bool) -> Self {
         Distribution {
-            counts: vec![if initialize_with_one { 1 } else { 0 }; 255],
-            odds: vec![0.0;255]
+            counts: vec![if initialize_with_one { 1 } else { 0 }; 256],
+            odds: vec![0.0;256]
         }
     }
 
