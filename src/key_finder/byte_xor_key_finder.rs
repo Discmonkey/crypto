@@ -35,17 +35,21 @@ impl KeyFinder for ByteXorKeyFinder {
 
         for key in 0..255 {
             let message = algo.decrypt(cipher_text, &Bytes::from_byte(key));
-            let mut d = Distribution::new(false);
+            let mut d = Distribution::new(true);
             d.load_and_count(&message);
             let score = self.ground_truth.kl_divergence_to(&d);
 
             heap.push(ScoredKey {
-                score: score,
-                bytes: message
+                score: -score,
+                bytes: Bytes::from_byte(key),
             })
         }
+        let mut ret = vec![];
+        for _ in 0..num_keys {
+            ret.push(heap.pop().unwrap());
+        }
 
-        heap.into_sorted_vec()
+        ret
     }
 }
 

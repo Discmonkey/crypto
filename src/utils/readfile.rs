@@ -12,6 +12,8 @@ pub fn read_hex<P>(filename: P) -> Vec<Bytes>
             if let Ok(parsed) = line {
                 if let Some(s) = Bytes::from_hex(&parsed) {
                     bytes_vec.push(s)
+                } else {
+                    println!("failed to read in hex");
                 }
             }
         }

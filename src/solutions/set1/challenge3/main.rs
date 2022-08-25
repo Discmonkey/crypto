@@ -11,6 +11,6 @@ fn main() {
     let keys = key_finder.find_key(2, &cipher_text);
 
     for key in keys {
-        println!("{}", algo.decrypt(&cipher_text, &key.bytes).to_utf8());
+        println!("{} - {}", &key.score, algo.decrypt(&cipher_text, &key.bytes).to_utf8());
     }
 }
