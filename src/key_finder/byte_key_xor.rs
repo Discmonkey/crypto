@@ -10,25 +10,25 @@ use crate::key_finder::{KeyFinder, KeyGenerator};
 use crate::key_finder::scored_key::ScoredKey;
 use crate::utils;
 
-pub struct ByteXorKeyFinder {
+pub struct ByteKeyXor {
     ground_truth: Distribution,
 }
 
 
-impl ByteXorKeyFinder {
+impl ByteKeyXor {
     pub fn new() -> Option<Self> {
         let mut d = Distribution::new(true);
         let corpus = utils::readfile::read_ut8("test/corpus")?;
 
         d.load_and_count(&corpus);
 
-        Some(ByteXorKeyFinder {
+        Some(ByteKeyXor {
             ground_truth: d
         })
     }
 }
 
-impl KeyFinder for ByteXorKeyFinder {
+impl KeyFinder for ByteKeyXor {
     fn find_key(&self, num_keys: usize, cipher_text: &Bytes) -> Vec<ScoredKey> {
         let mut heap = binary_heap::BinaryHeap::with_capacity(num_keys);
         let algo = SingleByteXor {};
@@ -57,7 +57,7 @@ impl KeyFinder for ByteXorKeyFinder {
 mod tests {
     use std::collections::binary_heap;
     use crate::bitstring::bytes::Bytes;
-    use crate::key_finder::byte_xor_key_finder::ScoredKey;
+    use crate::key_finder::byte_key_xor::ScoredKey;
 
     #[test]
     fn sortable_heap() {

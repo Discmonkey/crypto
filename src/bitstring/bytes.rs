@@ -193,6 +193,14 @@ impl Bytes {
         }
     }
 
+    pub fn from_bytes(bytes: Vec<u8>) -> Self {
+        let bit_length = 8 * bytes.len();
+        Self {
+            bytes,
+            bit_length
+        }
+    }
+
     pub fn xor(&self, other: &Self) -> Self {
         Self {
             bytes: self.bytes.iter().zip(other.bytes.iter()).map(|(a, b)| {
