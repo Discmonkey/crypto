@@ -2,7 +2,6 @@ pub mod byte_key_xor;
 pub mod scored_key;
 pub mod repeating_key_xor;
 
-use crate::algorithm::Algorithm;
 use crate::bitstring::bytes::Bytes;
 use crate::key_finder::scored_key::ScoredKey;
 

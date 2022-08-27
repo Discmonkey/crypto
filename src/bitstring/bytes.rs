@@ -127,6 +127,9 @@ impl Bytes {
         let mut bit_length= 0;
         let mut bit_index = 0;
         for char in string.chars() {
+            if char == '=' {
+                continue
+            }
             let value = base64_to_int(char)?;
             for setter in BIT_SETTERS.iter().skip(2) {
                 if setter & value > 0 {

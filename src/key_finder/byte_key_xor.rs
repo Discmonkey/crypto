@@ -1,12 +1,10 @@
-use std::cmp::Ordering;
 use std::collections::binary_heap;
-use std::io::Read;
 
 use crate::algorithm::Algorithm;
 use crate::algorithm::single_byte_xor::SingleByteXor;
 use crate::bitstring::bytes::Bytes;
 use crate::distribution::Distribution;
-use crate::key_finder::{KeyFinder, KeyGenerator};
+use crate::key_finder::{KeyFinder};
 use crate::key_finder::scored_key::ScoredKey;
 use crate::utils;
 
@@ -30,7 +28,7 @@ impl ByteKeyXor {
 
 impl KeyFinder for ByteKeyXor {
     fn find_key(&self, num_keys: usize, cipher_text: &Bytes) -> Vec<ScoredKey> {
-        let mut heap = binary_heap::BinaryHeap::with_capacity(num_keys);
+        let mut heap = binary_heap::BinaryHeap::new();
         let algo = SingleByteXor {};
 
         for key in 0..255 {
@@ -40,16 +38,11 @@ impl KeyFinder for ByteKeyXor {
             let score = self.ground_truth.kl_divergence_to(&d);
 
             heap.push(ScoredKey {
-                score: -score,
+                score,
                 bytes: Bytes::from_byte(key),
             })
         }
-        let mut ret = vec![];
-        for _ in 0..num_keys {
-            ret.push(heap.pop().unwrap());
-        }
-
-        ret
+        heap.into_sorted_vec().into_iter().take(num_keys).collect()
     }
 }
 
