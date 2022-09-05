@@ -36,6 +36,19 @@ pub fn read_base64<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
     Bytes::from_base64(&base_64)
 }
 
+pub fn read_base64_lines<P: AsRef<Path>>(filename: P) -> Option<Vec<Bytes>> {
+    let mut ret = vec![];
+
+    let lines = read_lines(filename).ok()?;
+
+    for line in lines {
+        if let Ok(parsed) = line {
+            ret.push(Bytes::from_base64(&parsed)?);
+        }
+    }
+    Some(ret)
+}
+
 pub fn read_ut8<P: AsRef<Path>>(filename: P) -> Option<Bytes> {
     let mut bytes = Bytes::new();
     if let Ok(lines) = read_lines(filename) {

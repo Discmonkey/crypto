@@ -1,6 +1,6 @@
 use crate::bitstring::bytes::Bytes;
 
-pub fn split_into_n(bytes: Bytes, n: usize) -> Vec<Bytes> {
+pub fn split_into_n(bytes: &Bytes, n: usize) -> Vec<Bytes> {
     let length = bytes.bytes.len() / n;
     let mut ret = vec![];
     for i in 0..n {

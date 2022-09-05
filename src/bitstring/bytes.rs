@@ -123,25 +123,24 @@ impl Bytes {
     }
 
     pub fn from_base64(string: &str) -> Option<Self> {
-        let mut bytes = vec![0];
+        let mut bytes = vec![];
         let mut bit_length= 0;
         let mut bit_index = 0;
         for char in string.chars() {
             if char == '=' {
                 continue
             }
+
             let value = base64_to_int(char)?;
             for setter in BIT_SETTERS.iter().skip(2) {
+                if bit_index == 0 {
+                    bytes.push(0);
+                }
                 if setter & value > 0 {
                     *bytes.last_mut().unwrap() += BIT_SETTERS[bit_index];
                 }
-                bit_index += 1;
+                bit_index = (bit_index + 1) % 8;
                 bit_length += 1;
-
-                if bit_index == 8 {
-                    bit_index = 0;
-                    bytes.push(0);
-                }
             }
         }
 
