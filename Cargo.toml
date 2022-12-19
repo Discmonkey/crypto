@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 float-ord = "0.3.1"
 aes = "0.8.1"
+rand = "0.8.5"
 
 [[bin]]
 name = "set1_challenge1"
@@ -45,3 +46,11 @@ path = "src/solutions/set1/challenge8/main.rs"
 [[bin]]
 name = "set2_challenge1"
 path = "src/solutions/set2/challenge1/main.rs"
+
+[[bin]]
+name = "set2_challenge2"
+path = "src/solutions/set2/challenge2/main.rs"
+
+[[bin]]
+name = "set2_challenge3"
+path = "src/solutions/set2/challenge3/main.rs"

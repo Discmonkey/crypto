@@ -7,7 +7,6 @@ use aes::cipher::{
 };
 use crate::algorithm::Algorithm;
 use crate::bitstring::bytes::Bytes;
-use crate::utils::split_bytes::split_into_n;
 
 
 pub struct Aes128 {
@@ -18,7 +17,7 @@ fn vec_to_array(v: Vec<u8>) -> [u8; 16] {
 }
 
 fn to_blocks(bytes: &Bytes) -> Vec<Block> {
-    split_into_n(bytes, bytes.len() / 128).into_iter().map(|b| {
+    bytes.to_blocks(16).into_iter().map(|b| {
         Block::from(vec_to_array(b.bytes))
     }).collect()
 }
@@ -26,8 +25,8 @@ fn to_blocks(bytes: &Bytes) -> Vec<Block> {
 fn from_blocks(blocks: Vec<Block>) -> Bytes {
     let mut ret = Bytes::new();
     blocks.into_iter().for_each(|b| {
-        b.into_iter().for_each(|byte| {
-            ret.push_byte(byte)
+        b.iter().for_each(|byte| {
+            ret.push_byte(*byte)
         })
     });
 
@@ -36,12 +35,16 @@ fn from_blocks(blocks: Vec<Block>) -> Bytes {
 
 impl Algorithm for Aes128 {
     fn encrypt(&self, message: &Bytes, key: &Bytes) -> Bytes {
-        unimplemented!()
+        let key_aes = vec_to_array(key.bytes.clone());
+        let cipher = Aes128Backend::new(&Block::from(key_aes));
+        let mut blocks = to_blocks(message);
+        cipher.encrypt_blocks(&mut blocks);
+
+        from_blocks(blocks)
     }
 
     fn decrypt(&self, cipher_text: &Bytes, key: &Bytes) -> Bytes {
-        assert_eq!(key.bytes.len(), 16);
-        assert_eq!(cipher_text.bytes.len() % 16, 0);
+        assert_eq!(key.bytes.len(), 16, "only support key length 16");
 
         let key_aes = vec_to_array(key.bytes.clone());
         let cipher = Aes128Backend::new(&Block::from(key_aes));
@@ -49,5 +52,28 @@ impl Algorithm for Aes128 {
         cipher.decrypt_blocks(&mut blocks);
 
         from_blocks(blocks)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::algorithm::aes_128::Aes128;
+    use crate::algorithm::Algorithm;
+    use crate::bitstring::bytes::Bytes;
+
+    #[test]
+    fn test_true() {
+        let alg = Aes128{};
+        let mut message = Bytes::from_utf8("This is a test");
+        message.pad_pkcs(16);
+        let mut key = Bytes::from_utf8("aleah");
+        key.pad_pkcs(16);
+        let cipher = alg.encrypt(&message, &key);
+        let decoded = alg.decrypt(&cipher, &key);
+
+        let left = message.to_utf8();
+        let right = decoded.to_utf8();
+
+        assert_eq!(left, right)
     }
 }

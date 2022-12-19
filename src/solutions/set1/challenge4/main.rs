@@ -4,7 +4,7 @@ use crypto::bitstring::bytes::Bytes;
 use crypto::key_finder::byte_key_xor::ByteKeyXor;
 use crypto::key_finder::KeyFinder;
 use crypto::utils::readfile::{read_base64, read_hex};
-use crypto::utils::split_bytes::split_into_n;
+use crypto::utils::split_bytes::to_blocks;
 
 use std::collections::binary_heap::BinaryHeap;
 use crypto::key_finder::scored_key::ScoredKey;

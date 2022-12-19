@@ -1,4 +1,7 @@
+use std::cmp::max;
 use std::fmt::{Write};
+use std::ops::Add;
+
 static BASE_64: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static HEX: &str = "0123456789abcdef";
 const BIT_SETTERS: &'static [u8] = &[
@@ -25,6 +28,15 @@ impl Bytes {
             bytes: vec!(),
             bit_length: 0
         }
+    }
+
+    pub fn new_zeros(length: usize) -> Self {
+        let mut bytes = Self::new();
+        for _ in 0..length {
+            bytes.push_byte(0);
+        }
+
+        bytes
     }
 
     pub fn read_bit(&self, byte: usize, bit: usize) -> u8 {
@@ -114,7 +126,7 @@ impl Bytes {
     pub fn from_utf8(string: &str) -> Self {
         Self {
             bytes: string.bytes().collect(),
-            bit_length: string.bytes().len(),
+            bit_length: string.bytes().len() * 8,
         }
     }
 
@@ -224,14 +236,55 @@ impl Bytes {
         total
     }
 
+    pub fn pad_pkcs(&mut self, to_size: usize) {
+        let padding_needed:u8 = (to_size - (self.len() % to_size)) as u8;
+
+        while self.len() % to_size != 0 {
+            self.push_byte(padding_needed)
+        }
+    }
+
+    pub fn to_blocks(&self, block_size: u8) -> Vec<Self> {
+        assert!(block_size > 0);
+        let num_blocks = max(self.len() / (block_size as usize), 1);
+        let mut ret = vec![Self::new(); num_blocks];
+
+        for (i, byte) in  self.bytes.iter().enumerate() {
+            ret[i / block_size as usize].push_byte(*byte)
+        }
+
+        ret.last_mut().unwrap().pad_pkcs(block_size as usize);
+
+        ret
+    }
+
+    pub fn bit_len(&self) -> usize {
+        self.bit_length
+    }
+
     pub fn len(&self) -> usize {
-        return self.bit_length
+        self.bit_length / 8
     }
 }
 
 macro_rules! offset {
     ($char:tt, $by:expr) => {
         ($char as u8) - ($by as u8)
+    }
+}
+
+impl Add for Bytes {
+    type Output = Bytes;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let mut out = Bytes::new();
+        for byte in self.bytes {
+            out.push_byte(byte);
+        }
+        for byte in rhs.bytes {
+            out.push_byte(byte);
+        }
+        out
     }
 }
 
@@ -299,3 +352,4 @@ mod tests {
         assert_eq!(Bytes::from_bitstring("11001100111").unwrap().count_ones(), 7);
     }
 }
+
